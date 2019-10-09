@@ -3,7 +3,7 @@
 
 # # Images of satellites classification
 
-# In[ ]:
+# In[37]:
 
 
 from google_images_download import google_images_download   #importing the library
@@ -13,11 +13,12 @@ import matplotlib.pyplot as plt
 import imutils
 import os
 import pandas as pd
+from shutil import copyfile
 
 
 # ## Download images of satellites / non satellites
 
-# In[ ]:
+# In[2]:
 
 
 nb_images = 2000 # The number of images to download (both from satellite and non satellite images)
@@ -25,7 +26,7 @@ download = False  # Are we doanloading the images ?
 chromeDriverPath = "/usr/bin/chromedriver"
 
 
-# In[ ]:
+# In[3]:
 
 
 def downloadImages(tags, nbImgs):
@@ -38,7 +39,7 @@ def downloadImages(tags, nbImgs):
 
 # download list of satellites categories
 
-# In[ ]:
+# In[4]:
 
 
 # categories taken from https://www.omicsonline.org/conferences-list/types-of-satellites-and-applications
@@ -47,13 +48,13 @@ categories = ["Communications Satellite","Remote Sensing Satellite","Navigation 
               "Polar Satellite","Nano Satellites","CubeSats","SmallSats"]
 
 
-# In[ ]:
+# In[5]:
 
 
 downloadImages(categories, nb_images)
 
 
-# In[ ]:
+# In[6]:
 
 
 catpd = [pandas.read_json("logs/" + str(cat) + ".json") for cat in categories]
@@ -61,26 +62,26 @@ catpd = [pandas.read_json("logs/" + str(cat) + ".json") for cat in categories]
 
 # ### download of images
 
-# In[ ]:
+# In[7]:
 
 
 downloadImages(["satellite","images"], nb_images)
 
 
-# In[ ]:
+# In[8]:
 
 
 imgpd = pandas.read_json("logs/images.json")
 satpd = pandas.read_json("logs/satellite.json")
 
 
-# In[ ]:
+# In[9]:
 
 
 imgpd.image_filename.count(), satpd.image_filename.count()
 
 
-# In[ ]:
+# In[10]:
 
 
 satpd.iloc[0]
@@ -88,7 +89,7 @@ satpd.iloc[0]
 
 # ### display of the first images
 
-# In[ ]:
+# In[11]:
 
 
 def draw_imgs(imgs_list):
@@ -101,7 +102,7 @@ def draw_imgs(imgs_list):
     plt.show()
 
 
-# In[ ]:
+# In[12]:
 
 
 listnonsat = []
@@ -121,7 +122,7 @@ for i in range(0,7):
 draw_imgs([listnonsat, listsat])
 
 
-# In[ ]:
+# In[13]:
 
 
 listcat = []
@@ -140,7 +141,7 @@ draw_imgs(listcat)
 
 # ## Classify satellite images
 
-# In[ ]:
+# In[14]:
 
 
 #saving images in the right directories for keras CNN
@@ -196,13 +197,13 @@ for i in range(0,satpd.shape[0]):
     
 
 
-# In[ ]:
+# In[15]:
 
 
 len(listnonsat), len(listsat)
 
 
-# In[ ]:
+# In[16]:
 
 
 from keras.models import Sequential
@@ -217,7 +218,7 @@ NB_TRAIN_IMG = 200 # Replace with the total number training images
 NB_VALID_IMG = 50 # Replace with the total number validation images
 
 
-# In[ ]:
+# In[17]:
 
 
 cnn = Sequential()
@@ -253,13 +254,13 @@ cnn.add(Activation('sigmoid'))
 cnn.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
 
-# In[ ]:
+# In[18]:
 
 
 print(cnn.summary())
 
 
-# In[ ]:
+# In[19]:
 
 
 train_datagen = ImageDataGenerator(
@@ -283,7 +284,7 @@ validation_generator = test_datagen.flow_from_directory(
         class_mode='binary')
 
 
-# In[ ]:
+# In[20]:
 
 
 cnn.fit_generator(
@@ -294,19 +295,19 @@ cnn.fit_generator(
         validation_steps=80)
 
 
-# In[ ]:
+# In[21]:
 
 
 cnn.save_weights('cnn.h5')
 
 
-# In[ ]:
+# In[22]:
 
 
 cnn.load_weights('cnn.h5')
 
 
-# In[ ]:
+# In[23]:
 
 
 test_generator = test_datagen.flow_from_directory(
@@ -317,25 +318,25 @@ test_generator = test_datagen.flow_from_directory(
 test_imgs, test_labels = next(test_generator)
 
 
-# In[ ]:
+# In[24]:
 
 
 test_imgs.shape
 
 
-# In[ ]:
+# In[25]:
 
 
 predictions = cnn.predict_generator(test_generator, steps=1)
 
 
-# In[ ]:
+# In[26]:
 
 
 predictions.shape
 
 
-# In[ ]:
+# In[27]:
 
 
 # check satellites
@@ -345,7 +346,7 @@ for i in range(0,predictions.shape[0]):
         plt.imshow(test_imgs[i])
 
 
-# In[ ]:
+# In[28]:
 
 
 # check non satellites
@@ -357,7 +358,7 @@ for i in range(0,predictions.shape[0]):
 
 # ## filtering specific satellites datasets
 
-# In[ ]:
+# In[29]:
 
 
 try:
@@ -380,7 +381,7 @@ for i in range(0,catpd[1].shape[0]):
 draw_imgs([listspecific])
 
 
-# In[ ]:
+# In[30]:
 
 
 specific_generator = test_datagen.flow_from_directory(
@@ -391,13 +392,13 @@ specific_generator = test_datagen.flow_from_directory(
 specific_imgs, specific_labels = next(specific_generator)
 
 
-# In[ ]:
+# In[31]:
 
 
 specific_predictions = cnn.predict_generator(specific_generator, steps=1)
 
 
-# In[ ]:
+# In[32]:
 
 
 # check satellites
@@ -407,7 +408,7 @@ for i in range(0,specific_predictions.shape[0]):
         plt.imshow(specific_imgs[i])
 
 
-# In[ ]:
+# In[33]:
 
 
 # check non satellites
@@ -417,8 +418,126 @@ for i in range(0,specific_predictions.shape[0]):
         plt.imshow(specific_imgs[i])
 
 
-# In[ ]:
+# In[34]:
 
 
 pd.Series(specific_predictions.transpose()[0]).hist()
 
+
+# #### It looks like filtering is not going to work properly so we're just leaving the specific data sets as downloaded
+
+# ### labelling specific satellite datasets
+
+# In[77]:
+
+
+try:
+    os.mkdir("./labelling")
+    os.mkdir("./labelling/train")
+    os.mkdir("./labelling/test")
+    os.mkdir("./labelling/valid")
+    for cat in categories:
+        os.mkdir("./labelling/train/" + cat)
+        os.mkdir("./labelling/test/" + cat)
+        os.mkdir("./labelling/valid/" + cat)
+except:
+    print("directory exists")
+    
+listlabelling = []
+for j in range(0, len(categories)):
+    for i in range(0,catpd[j].shape[0]):
+        
+        try:
+            image = "./downloads/"+categories[j]+" - thumbnail/"+catpd[j].image_filename[i]
+            dstype = "train"
+            if i%3 == 1:
+                dstype = "test"
+            if i%3 == 2:
+                dstype = "valid"
+            dest = "./labelling/"+dstype+"/"+categories[j]+"/"+str(i)+".jpg"  
+            
+            img =cv2.imread(image)
+            img = cv2.resize(img, (244,244), cv2.INTER_AREA)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            cv2.imwrite(dest, img)
+            #copyfile(image, dest)
+        except:
+            print("image not copied")
+        
+
+
+# #### We want to use th VGG16 architexture but with only 13 classes
+
+# In[78]:
+
+
+from keras.applications.vgg16 import VGG16
+from keras.preprocessing import image
+from keras.applications.vgg16 import preprocess_input
+from keras.layers import Input, Flatten, Dense
+from keras.models import Model
+from keras.optimizers import SGD
+import numpy as np
+
+#Get back the convolutional part of a VGG network trained on ImageNet
+model_vgg16_conv = VGG16(weights='imagenet', include_top=False)
+model_vgg16_conv.summary()
+
+#Create your own input format (here 3x64x64)
+inputlayer = Input(shape=(244,244,3),name = 'image_input')
+
+#Use the generated model 
+output_vgg16_conv = model_vgg16_conv(inputlayer)
+
+#Add the fully-connected layers 
+x = Flatten(name='flatten')(output_vgg16_conv)
+x = Dense(2048, activation='relu', name='fc1')(x)
+x = Dense(512, activation='relu', name='fc2')(x)
+x = Dense(13, activation='softmax', name='predictions')(x)
+
+#Create the model 
+labelmodel = Model(input=inputlayer, output=x)
+
+#In the summary, weights and layers from VGG part will be hidden, but they will be fit during the training
+labelmodel.summary()
+
+
+# In[84]:
+
+
+sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+labelmodel.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
+#labelmodel.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+
+
+# In[85]:
+
+
+train_label_generator = train_datagen.flow_from_directory(
+        'labelling/train',
+        target_size=(244, 244),
+        batch_size=32,
+        class_mode='categorical')
+
+validation_label_generator = test_datagen.flow_from_directory(
+        'labelling/valid',
+        target_size=(244, 244),
+        batch_size=32,
+        class_mode='categorical')
+
+
+# In[88]:
+
+
+labelmodel.fit_generator(
+        train_label_generator,
+        steps_per_epoch=10,
+        epochs=5,
+        validation_data=validation_label_generator,
+        validation_steps=5)
+
+
+# #### By looking at the evolution of the accuracy (and validation accuracy) the network is not learning properly
+# #### some overfitting occurs.
+# #### We need to improve the quality and quantity of images in the datasets of the different categories to be able 
+# #### to get a better annotation model.
